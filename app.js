@@ -14,7 +14,7 @@ router.get("/", (req, res) => {
     return res.json({ message: "hello world" });
   });
 app.use('/api', [QuizzersRouter, MembersRouter, DebatesRouter]);
-app.use(errorHandlingMiddleware);
+// app.use(errorHandlingMiddleware);
 
 app.listen(port, () => {
     console.log(port, "서버가 열렸습니다.")
