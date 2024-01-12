@@ -17,7 +17,8 @@ model Members {
     password    String      
 
     quizzes     Quizzes[]
-    debates     Debates[] 
+    debates     Debates[]
+    comments    Comments[] 
     @@map("Members")
 }
 
@@ -31,20 +32,31 @@ model Quizzes {
     updatedAt   DateTime    @updatedAt
     User        Members     @relation(fields: [UserId], references: [userId])
 
-    debates     Debates[]
     @@map("Quizzes")
 }
 
 model Debates {
     debateId    Int         @id @default(autoincrement())
-    UserId      Int         
-    QuizId      Int         
+    UserId      Int                
     title       String      
     content     String      
     createdAt   DateTime    @default(now())
     updatedAt   DateTime    @updatedAt
     User        Members     @relation(fields: [UserId], references: [userId])
-    Quiz        Quizzes     @relation(fields: [QuizId], references: [quizId])
 
+    comments Comments[]
     @@map("Debates")
+}
+
+model Comments {
+    commentId   Int         @id @default(autoincrement())
+    UserId      Int  
+    DebateId    Int
+    content     String 
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+    User        Members     @relation(fields: [UserId], references: [userId])
+    debate      Debates     @relation(fields: [DebateId], references: [debateId])
+
+    @@map("Comments")
 }
