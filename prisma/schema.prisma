@@ -30,7 +30,7 @@ model Quizzes {
     imageURL    String      
     createdAt   DateTime    @default(now())
     updatedAt   DateTime    @updatedAt
-    User        Members     @relation(fields: [UserId], references: [userId])
+    User        Members     @relation(fields: [UserId], references: [userId], onDelete: Cascade)
 
     @@map("Quizzes")
 }
@@ -42,7 +42,7 @@ model Debates {
     content     String      
     createdAt   DateTime    @default(now())
     updatedAt   DateTime    @updatedAt
-    User        Members     @relation(fields: [UserId], references: [userId])
+    User        Members     @relation(fields: [UserId], references: [userId], onDelete: Cascade)
 
     comments Comments[]
     @@map("Debates")
@@ -55,8 +55,8 @@ model Comments {
     content     String 
     createdAt   DateTime    @default(now())
     updatedAt   DateTime    @updatedAt
-    User        Members     @relation(fields: [UserId], references: [userId])
-    debate      Debates     @relation(fields: [DebateId], references: [debateId])
+    User        Members     @relation(fields: [UserId], references: [userId], onDelete: Cascade)
+    debate      Debates     @relation(fields: [DebateId], references: [debateId], onDelete: Cascade)
 
     @@map("Comments")
 }
