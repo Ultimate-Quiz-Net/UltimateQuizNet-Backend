@@ -15,6 +15,7 @@ model Members {
     username    String      
     nickname    String      
     password    String      
+    hashedRefreshToken String?
 
     quizzes     Quizzes[]
     debates     Debates[] 
