@@ -117,7 +117,7 @@ membersRouter.post("/sign-out", memberMiddleware, async (req, res, next) => {
 });
 
 // 비밀번호 변경 API
-// 비밀번호 바디에 받고 -> 확인 ,
+// 비밀번호 바디에 받고 -> 확인
 // 맞으면 변경.
 membersRouter.patch("/pwupdate", memberMiddleware, async (req, res, next) => {
   try {
@@ -164,7 +164,7 @@ export function createAccessToken(username) {
   const accessToken = jwt.sign(
     { username }, // JWT 데이터
     process.env.JWT_ACCESS_SECRET_KEY, // Access Token의 비밀 키
-    { expiresIn: "1h" } // Access Token이 10초 뒤에 만료되도록 설정합니다.
+    { expiresIn: "1h" } // Access Token이 10초 뒤에 만료되도록 설정.
   );
 
   return accessToken;
@@ -175,7 +175,7 @@ export function createRefreshToken(username) {
   const refreshToken = jwt.sign(
     { username }, // JWT 데이터
     process.env.JWT_REFRESH_SECRET_KEY, // Refresh Token의 비밀 키
-    { expiresIn: "7d" } // Refresh Token이 7일 뒤에 만료되도록 설정합니다.
+    { expiresIn: "7d" } // Refresh Token이 7일 뒤에 만료되도록 설정.
   );
 
   return refreshToken;
