@@ -4,7 +4,7 @@ import multerS3 from "multer-s3";
 import path from "path";
 
 AWS.config.update({
-  region: "ap-northeast-2",
+  region: process.env.REGION,
   accessKeyId: process.env.ACCESS_KEY,
   secretAccessKey: process.env.SECRET_ACCESS_KEY,
 });
