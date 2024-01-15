@@ -16,7 +16,6 @@ model Members {
     nickname           String      
     password           String      
     hashedRefreshToken String?
-
     quizzes            Quizzes[]
     debates            Debates[] 
     @@map("Members")
