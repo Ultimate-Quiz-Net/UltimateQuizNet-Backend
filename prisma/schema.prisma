@@ -11,7 +11,7 @@ datasource db {
 }
 
 model Members {
-    userId           Int         @id @default(autoincrement())
+    userId             Int         @id @default(autoincrement())
     username           String      
     nickname           String      
     password           String      
@@ -44,6 +44,7 @@ model Debates {
     content            String      
     createdAt          DateTime    @default(now())
     updatedAt          DateTime    @updatedAt
+    deletedAt          DateTime                
     deleted            Boolean?    @default(false)
     User               Members     @relation(fields: [UserId], references: [userId])
     Quiz               Quizzes     @relation(fields: [QuizId], references: [quizId])
