@@ -11,52 +11,56 @@ datasource db {
 }
 
 model Members {
-    userId      Int         @id @default(autoincrement())
-    username    String      
-    nickname    String      
-    password    String      
-
-    quizzes     Quizzes[]
-    debates     Debates[]
-    comments    Comments[] 
+    userId           Int         @id @default(autoincrement())
+    username           String      
+    nickname           String      
+    password           String      
+    hashedRefreshToken String?
+    quizzes            Quizzes[]
+    debates            Debates[] 
     @@map("Members")
 }
 
 model Quizzes {
-    quizId      Int         @id @default(autoincrement())      
-    UserId      Int         
-    title       String      
-    content     String      
-    imageURL    String      
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
-    User        Members     @relation(fields: [UserId], references: [userId], onDelete: Cascade)
+    quizId             Int         @id @default(autoincrement())      
+    UserId             Int         
+    title              String      
+    content            String      
+    imageURL           String      
+    createdAt          DateTime    @default(now())
+    updatedAt          DateTime    @updatedAt
+    deletedAt          DateTime    
+    User               Members     @relation(fields: [UserId], references: [userId])
 
+    debates     Debates[]
     @@map("Quizzes")
 }
 
 model Debates {
-    debateId    Int         @id @default(autoincrement())
-    UserId      Int                
-    title       String      
-    content     String      
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
-    User        Members     @relation(fields: [UserId], references: [userId], onDelete: Cascade)
+    debateId           Int         @id @default(autoincrement())
+    UserId             Int         
+    QuizId             Int         
+    title              String      
+    content            String      
+    createdAt          DateTime    @default(now())
+    updatedAt          DateTime    @updatedAt
+    deletedAt          DateTime    
+    User               Members     @relation(fields: [UserId], references: [userId])
+    Quiz               Quizzes     @relation(fields: [QuizId], references: [quizId])
+    Comments           Comments[]
 
-    comments Comments[]
     @@map("Debates")
 }
 
 model Comments {
-    commentId   Int         @id @default(autoincrement())
-    UserId      Int  
-    DebateId    Int
-    content     String 
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
-    User        Members     @relation(fields: [UserId], references: [userId], onDelete: Cascade)
-    debate      Debates     @relation(fields: [DebateId], references: [debateId], onDelete: Cascade)
+  commentId            Int         @id @default(autoincrement())
+  DebateId             Int
+  title                String       
+  content              String   
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  deletedAt            DateTime    
+  Debates              Debates     @relation(fields: [DebateId], references: [debateId], onDelete: Cascade )
 
-    @@map("Comments")
+  @@map("Comments")
 }

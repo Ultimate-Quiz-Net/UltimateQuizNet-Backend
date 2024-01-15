@@ -59,6 +59,12 @@ router.get("/debates", authMiddlewares, async (req, res, next) => {
         title: true,
         createdAt: true,
       },
+      where: {
+        deletedAt: null, // deletedAt 이 null 인것만 다 출력하게끔함
+        // deletedAt is not null  하면 됨
+        deleted: false,
+      },
+
       // 내림차순으로 정렬되어서 나옴
       orderBy: { id: "desc" },
     });
@@ -74,19 +80,29 @@ router.get("/debates", authMiddlewares, async (req, res, next) => {
   }
 });
 
-// 토론 상세 조회
+// 토론 상세 조회 & 포함된 댓글도 함께 조회
 router.get("/debates/:debateId", authMiddlewares, async (req, res, next) => {
   try {
     const { debateId } = req.params;
     // DB에서 debateId에 근거하여 하나의 토론글만 끄집어냄
     // 끄집어내는 데이터: 고유 ID 값, 제목, 내용,생성날짜
-    const data = await prisma.debates.findFirst({
-      where: { debateId: +debateId },
+    const data = await prisma.debates.findUnique({
+      where: { debateId: +debateId, deletedAt: null },
       select: {
         debateId: true,
         title: true,
         content: true,
         createdAt: true,
+      },
+      include: {
+        comments: {
+          UserId: true,
+          content: true,
+          createdAt: true,
+        },
+        where: { deletedAt: null },
+        // 댓글을 내림차 순으로 정렬
+        orderBy: { createdAt: "desc" },
       },
     });
     //선택한 토론 글이 없을 시, 없다는 오류 메시지
@@ -101,13 +117,65 @@ router.get("/debates/:debateId", authMiddlewares, async (req, res, next) => {
   }
 });
 
-// 상세 조회된 토론글에 댓글 달기 API
+// 토론글 편집
+router.patch("/debates/:debateId", authMiddlewares, async (req, res, next) => {
+  try {
+    // json으로 입력되는 데이터
+    // title(제목)과 content(내용)이 있음.
+    const { title, content } = req.body;
+    const { debateId } = req.params;
+    // 제목과 내용이 없을 시 다음 오류를 반환.
+    if (!title || !content) {
+      throw new Error("unQualified");
+    }
+    // Joi 유효성 검사
+    await checkDebates.validateAsync(req.body);
+
+    // 데이터를 DB에 입력
+    await prisma.debates.update({
+      where: { debateId: +debateId },
+      data: {
+        UserId: +req.user.userId,
+        title,
+        content,
+      },
+    });
+
+    // 입력 성공 시, 완료 메시지 전달.
+    return res.status(200).json({ message: "게시글을 수정하였습니다." });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// 토론 글 삭제 API
+router.delete("/debates/:debateId", authMiddlewares, async (req, res, next) => {
+  try {
+    // 삭제할 Id를 params에서 가져옴.
+    const { debateId } = req.params;
+    // 제목과 내용이 없을 시 다음 오류를 반환.
+
+    // 해당 데이터를 DB에 soft delete로 입력
+    await prisma.debates.update({
+      where: { debateId: +debateId },
+      data: { deletedAt: new Date() }, // UTC 시간으로 저장됨  9시간 차이 -> 국제 시간 표준 -> 프론트에서 시간을 조정해야함.
+      // data: { deleted: true },
+    });
+
+    // 입력 성공 시, 완료 메시지 전달.
+    return res.status(202).json({ message: "게시글을 삭제하였습니다." });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// 상세 조회된 토론글에 댓글 생성 API
 router.post(
   "/debates/:debateId/comments",
   authMiddlewares,
   async (req, res, next) => {
     try {
-        const { debateId } = req.params;
+      const { debateId } = req.params;
       // json으로 입력되는 데이터
       // 댓글 내용(contents)이 있음.
       const { content } = req.body;
@@ -121,11 +189,11 @@ router.post(
 
       // 댓글이 달리는 토론글을 가져옴.
       const debate = await prisma.debates.findFirst({
-        where: {debateId: +debateId},
-      })
+        where: { debateId: +debateId },
+      });
 
       // 검사가 끝난 후 댓글을 DB에 등록
-      await prisma.debates.create({
+      await prisma.comments.create({
         data: {
           UserId: +req.user.userId,
           DebateId: +debate.debateId,
@@ -140,4 +208,63 @@ router.post(
     }
   }
 );
+
+// 상세 조회된 토론글에 댓글 편집 API
+router.post(
+  "/debates/:debateId/comments/:commentId",
+  authMiddlewares,
+  async (req, res, next) => {
+    try {
+      const { debateId } = req.params;
+      // json으로 입력되는 데이터
+      // 댓글 내용(contents)이 있음.
+      const { content } = req.body;
+
+      // Joi 유효성 검사
+      await checkComments.validateAsync(req.body);
+
+      // 댓글이 달리는 토론글을 가져옴.
+      const debate = await prisma.debates.findFirst({
+        where: { debateId: +debateId },
+      });
+
+      // 검사가 끝난 후 댓글을 DB에 수정함
+      await prisma.comments.update({
+        data: {
+          content,
+        },
+      });
+
+      // 성공 시, 댓글을 수정하였음을 클라이언트에게 전달
+      return res.status(200).json({ message: "댓글을 수정하였습니다." });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// 댓글 삭제 API
+router.delete(
+  "/debates/:debateId/comments/:commentId",
+  authMiddlewares,
+  async (req, res, next) => {
+    try {
+      // 삭제할 Id를 params에서 가져옴.
+      const { commentId } = req.params;
+      // 제목과 내용이 없을 시 다음 오류를 반환.
+
+      // 해당 데이터를 DB에 soft delete로 입력
+      await prisma.comments.update({
+        where: { commentId: +commentId },
+        data: { deletedAt: new Date() }, // UTC 시간으로 저장됨  9시간 차이 -> 국제 시간 표준 -> 프론트에서 시간을 조정해야함.
+      });
+
+      // 입력 성공 시, 완료 메시지 전달.
+      return res.status(202).json({ message: "댓글을 삭제하였습니다." });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 export default router;
