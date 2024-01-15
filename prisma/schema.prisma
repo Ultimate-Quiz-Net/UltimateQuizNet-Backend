@@ -45,6 +45,7 @@ model Debates {
     createdAt          DateTime    @default(now())
     updatedAt          DateTime    @updatedAt
     deletedAt          DateTime    
+
     User               Members     @relation(fields: [UserId], references: [userId])
     Quiz               Quizzes     @relation(fields: [QuizId], references: [quizId])
     Comments           Comments[]
@@ -64,3 +65,4 @@ model Comments {
 
   @@map("Comments")
 }
+
