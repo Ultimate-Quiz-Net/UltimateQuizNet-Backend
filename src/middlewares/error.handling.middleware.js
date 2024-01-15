@@ -13,6 +13,8 @@ export default function(err, req, res, next) {
             return res.status(409).json({ errorMessage: " 비밀번호가 일치 하지 않습니다. " })
         } else if (err.name === "ExistNickName") {
             return res.status(409).json({ errorMessage: " 중복된 닉네임 입니다. " })
+        } else if (err.name === "NoneData") {
+            return res.status(400).json({ errorMessage: " 존재 하지 않는 데이터 입니다. " })
         }
             next(err)
     } catch (err) {
