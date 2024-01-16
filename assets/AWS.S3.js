@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 import dotenv from 'dotenv'
->>>>>>> d15de269cb514bd650af24874b811df8690ef042
 import AWS from "aws-sdk";
 import multer from "multer";
 import multerS3 from "multer-s3";

@@ -15,18 +15,39 @@ const schema = Joi.object({
 })
 
 
+// 퀴즈 등록 api (우진님 api)
+// router.post('/quizzes', upload.single('image'), memberMiddleware, async (req, res, next) => {
+//     try {
+//         const { title, content } = req.body;
+//         const member = req.member;
+//         req.body.image = req.file.location;
+//         const quiz = await prisma.Quizzes.create({
+//             data: {
+//                 UserId: member.userId,
+//                 title,
+//                 content,
+//                 imageURL: req.file.location,
+//             }
+//         });
+//         return res.status(200).json({ message: " done.", data: quiz });
+//     } catch (error) {
+//         return res.status(400).json({ message: "다시." });
+//     }
+// });
+
 // 퀴즈 등록 api
-router.post('/quizzes', memberMiddleware, upload.single("imageURL"), async (req, res, next) => {
+router.post('/quizzes', memberMiddleware, upload.single("image"), async (req, res, next) => {
     try {
         const { title, content, imageURL } = req.body;
 
         // 유효성 검사 실행
-        await schema.validateAsync({ title, content, imageURL });
+        await schema.validateAsync({ title, content });
 
         // body로부터 아래의 값을 올바르게 전달받지 못한다면 400에러를 호출합니다.
-        if (!title || !content) {
-            return next(new Error("400"));
-        }
+        // 위에서 유효성 검사를 실행하므로 제외 ?
+        // if (!title || !content) {
+        //     return next(new Error("400"));
+        // }
 
         // 퀴즈를 등록하는 기능
         await prisma.quizzes.create({

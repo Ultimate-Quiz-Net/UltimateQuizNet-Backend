@@ -1,7 +1,7 @@
 import express from "express";
 import Joi from "joi";
 import { prisma } from "../utils/index.js";
-import authMiddlewares from "../middlewares/auth.middleware.js";
+import memberMiddleware from '../middlewares/member.middleware.js';
 
 const router = express.Router();
 
@@ -20,7 +20,7 @@ const checkComments = Joi.object({
 });
 
 // 토론 생성 API
-router.post("/debates", authMiddlewares, async (req, res, next) => {
+router.post("/debates", memberMiddleware, async (req, res, next) => {
   try {
     // json으로 입력되는 데이터
     // title(제목)과 content(내용)이 있음.
@@ -49,7 +49,7 @@ router.post("/debates", authMiddlewares, async (req, res, next) => {
 });
 
 // 토론 조회 API
-router.get("/debates", authMiddlewares, async (req, res, next) => {
+router.get("/debates", memberMiddleware, async (req, res, next) => {
   try {
     // DB에서 토론글을 끄집어냄
     // 끄집어내는 데이터: 고유 ID 값, 제목, 생성날짜
@@ -81,7 +81,7 @@ router.get("/debates", authMiddlewares, async (req, res, next) => {
 });
 
 // 토론 상세 조회 & 포함된 댓글도 함께 조회
-router.get("/debates/:debateId", authMiddlewares, async (req, res, next) => {
+router.get("/debates/:debateId", memberMiddleware, async (req, res, next) => {
   try {
     const { debateId } = req.params;
     // DB에서 debateId에 근거하여 하나의 토론글만 끄집어냄
@@ -118,7 +118,7 @@ router.get("/debates/:debateId", authMiddlewares, async (req, res, next) => {
 });
 
 // 토론글 편집
-router.patch("/debates/:debateId", authMiddlewares, async (req, res, next) => {
+router.patch("/debates/:debateId", memberMiddleware, async (req, res, next) => {
   try {
     // json으로 입력되는 데이터
     // title(제목)과 content(내용)이 있음.
@@ -149,7 +149,7 @@ router.patch("/debates/:debateId", authMiddlewares, async (req, res, next) => {
 });
 
 // 토론 글 삭제 API
-router.delete("/debates/:debateId", authMiddlewares, async (req, res, next) => {
+router.delete("/debates/:debateId", memberMiddleware, async (req, res, next) => {
   try {
     // 삭제할 Id를 params에서 가져옴.
     const { debateId } = req.params;
@@ -172,7 +172,7 @@ router.delete("/debates/:debateId", authMiddlewares, async (req, res, next) => {
 // 상세 조회된 토론글에 댓글 생성 API
 router.post(
   "/debates/:debateId/comments",
-  authMiddlewares,
+  memberMiddleware,
   async (req, res, next) => {
     try {
       const { debateId } = req.params;
@@ -212,7 +212,7 @@ router.post(
 // 상세 조회된 토론글에 댓글 편집 API
 router.post(
   "/debates/:debateId/comments/:commentId",
-  authMiddlewares,
+  memberMiddleware,
   async (req, res, next) => {
     try {
       const { debateId } = req.params;
@@ -246,7 +246,7 @@ router.post(
 // 댓글 삭제 API
 router.delete(
   "/debates/:debateId/comments/:commentId",
-  authMiddlewares,
+  memberMiddleware,
   async (req, res, next) => {
     try {
       // 삭제할 Id를 params에서 가져옴.
