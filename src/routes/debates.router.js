@@ -104,7 +104,7 @@ router.get("/debates/:debateId", authMiddlewares, async (req, res, next) => {
         Comments: {
           // 댓글을 내림차 순으로 정렬
           where: { deletedAt: null, DebateId: +debateId },
-          
+
           orderBy: { createdAt: "desc" },
           select: {
             User: {
@@ -146,6 +146,14 @@ router.patch("/debates/:debateId", authMiddlewares, async (req, res, next) => {
     // Joi 유효성 검사
     await checkDebates.validateAsync(req.body);
 
+    // 작성자 확인
+    const debate = await prisma.debates.findFirst({
+      where: { debateId: +debateId },
+    });
+    if (debate.UserId !== +req.member.userId) {
+      throw { name: "noAccess" };
+    }
+
     // 데이터를 DB에 입력
     await prisma.debates.update({
       where: { debateId: +debateId },
@@ -168,6 +176,15 @@ router.delete("/debates/:debateId", authMiddlewares, async (req, res, next) => {
     // 삭제할 Id를 params에서 가져옴.
     const { debateId } = req.params;
     // 제목과 내용이 없을 시 다음 오류를 반환.
+
+
+    // 작성자 확인
+    const debate = await prisma.debates.findFirst({
+      where: { debateId: +debateId },
+    });
+    if (debate.UserId !== +req.member.userId) {
+      throw { name: "noAccess" };
+    }
 
 
     // 해당 데이터를 DB에 soft delete로 입력
@@ -239,9 +256,17 @@ router.patch(
       // Joi 유효성 검사
       await checkComments.validateAsync(req.body);
 
+      // 작성자 확인
+      const debate = await prisma.comments.findFirst({
+        where: { commentId: +commentId },
+      });
+      if (debate.UserId !== +req.member.userId) {
+        throw { name: "noAccess" };
+      }
+
       // 검사가 끝난 후 댓글을 DB에 수정함
       await prisma.comments.update({
-        where: {commentId: +commentId},
+        where: { commentId: +commentId },
         data: {
           content,
         },
@@ -264,6 +289,14 @@ router.delete(
       // 삭제할 Id를 params에서 가져옴.
       const { commentId } = req.params;
       // 제목과 내용이 없을 시 다음 오류를 반환.
+
+      // 작성자 확인
+      const debate = await prisma.comments.findFirst({
+        where: { commentId: +commentId },
+      });
+      if (debate.UserId !== +req.member.userId) {
+        throw { name: "noAccess" };
+      }
 
       // 해당 데이터를 DB에 soft delete로 입력
       await prisma.comments.update({
