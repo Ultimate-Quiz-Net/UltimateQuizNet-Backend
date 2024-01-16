@@ -200,7 +200,9 @@ router.post(
       });
 
       // 성공 시, 댓글을 등록했음을 클라이언트에게 전달
-      return res.status(202).json({ message: "댓글을 등록하였습니다.", data:comment });
+      return res
+        .status(202)
+        .json({ message: "댓글을 등록하였습니다.", data: comment });
     } catch (error) {
       next(error);
     }
