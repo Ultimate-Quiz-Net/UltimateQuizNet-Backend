@@ -17,6 +17,8 @@ export default function(err, req, res, next) {
             return res.status(400).json({ errorMessage: " 존재 하지 않는 데이터 입니다. " })
         }else if (err.name === "unQualified") {
             return res.status(400).json({ errorMessage: " 입력 조건을 확인해 주세요. " })
+        }else if (err.name === "noAccess") {
+            return res.status(400).json({ errorMessage: " 작성자가 아닙니다. " })
         }
             next(err)
     } catch (err) {
