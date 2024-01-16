@@ -154,7 +154,6 @@ async function validateRefreshToken(refreshToken, hashedRefreshToken) {
 }
 
 async function decodedAccessToken(accessToken) {
-
   const [tokenType, token] = refreshToken.split(" ");
   return jwt.decode(token, process.env.JWT_ACCESS_SECRET_KEY);
 }

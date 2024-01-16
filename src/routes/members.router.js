@@ -99,7 +99,6 @@ membersRouter.post("/sign-in", async (req, res, next) => {
 // 로그아웃 API
 membersRouter.post("/sign-out", memberMiddleware, async (req, res, next) => {
   try {
-    console.log(1);
     if (!req.member) throw { name: "NoneData" };
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
