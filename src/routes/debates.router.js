@@ -44,35 +44,39 @@ router.post(
 );
 
 // 토론 조회 API //ok
-router.get("/debates", memberMiddleware, async (req, res, next) => {
-  try {
-    // DB에서 토론글을 끄집어냄
-    // 끄집어내는 데이터: 고유 ID 값, 제목, 생성날짜
-    const data = await prisma.debates.findMany({
-      select: {
-        debateId: true,
-        title: true,
-        content: true,
-        createdAt: true,
-      },
-      where: {
-        deletedAt: null, // deletedAt 이 null 인것만 다 출력하게끔함
-        // deletedAt is not null  하면 됨
-      },
-      // 내림차순으로 정렬되어서 나옴
-      orderBy: { createdAt: "desc" },
-    });
-    //토론 글이 없을 시, 없다는 오류 메시지
-    if (!data) {
-      throw new Error("noDebates");
-    }
+router.get(
+  "/quizzess/:id/debates",
+  memberMiddleware,
+  async (req, res, next) => {
+    try {
+      // DB에서 토론글을 끄집어냄
+      // 끄집어내는 데이터: 고유 ID 값, 제목, 생성날짜
+      const data = await prisma.debates.findMany({
+        select: {
+          debateId: true,
+          title: true,
+          content: true,
+          createdAt: true,
+        },
+        where: {
+          deletedAt: null, // deletedAt 이 null 인것만 다 출력하게끔함
+          // deletedAt is not null  하면 됨
+        },
+        // 내림차순으로 정렬되어서 나옴
+        orderBy: { createdAt: "desc" },
+      });
+      //토론 글이 없을 시, 없다는 오류 메시지
+      if (!data) {
+        throw new Error("noDebates");
+      }
 
-    // 성공 시, 토론 목록을 클라이언트에게 전달
-    return res.status(200).json({ data: data });
-  } catch (error) {
-    next(error);
+      // 성공 시, 토론 목록을 클라이언트에게 전달
+      return res.status(200).json({ data: data });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // 토론 상세 조회 & 포함된 댓글도 함께 조회 ok
 router.get("/debates/:debateId", memberMiddleware, async (req, res, next) => {
@@ -98,7 +102,6 @@ router.get("/debates/:debateId", memberMiddleware, async (req, res, next) => {
         },
       },
     });
-    const debate = data.map;
     //선택한 토론 글이 없을 시, 없다는 오류 메시지
     if (!data) {
       throw new Error("noDebates");
@@ -118,6 +121,14 @@ router.patch("/debates/:debateId", memberMiddleware, async (req, res, next) => {
     const { title, content } = req.body;
     const { debateId } = req.params;
     const member = req.member;
+
+    const debate = await prisma.debates.findFirst({
+      where: { debateId: +debateId },
+    });
+
+    if (debate.UserId !== member.userId) {
+      // 작성자가 아닙니다
+    }
     // 제목과 내용이 없을 시 다음 오류를 반환.
     // if (!title || !content) {
     //   throw new Error("unQualified");
@@ -129,7 +140,6 @@ router.patch("/debates/:debateId", memberMiddleware, async (req, res, next) => {
     await prisma.debates.update({
       where: { debateId: +debateId },
       data: {
-        UserId: member.userId,
         title,
         content,
       },
@@ -151,6 +161,14 @@ router.delete(
       // 삭제할 Id를 params에서 가져옴.
       const { debateId } = req.params;
       // 제목과 내용이 없을 시 다음 오류를 반환.
+
+      const debate = await prisma.debates.findFirst({
+        where: { debateId: +debateId },
+      });
+
+      if (debate.UserId !== member.userId) {
+        // 작성자가 아닙니다
+      }
 
       // 해당 데이터를 DB에 soft delete로 입력
       await prisma.debates.update({

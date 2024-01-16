@@ -5,9 +5,17 @@ import DebatesRouter from "./src/routes/debates.router.js";
 import errorHandlingMiddleware from "./src/middlewares/error.handling.middleware.js";
 import cookieParser from "cookie-parser";
 import expressSession from "express-session";
+import cors from "cors";
 
 const app = express();
 const port = 3000;
+
+let corsOptions = {
+  origin: "localhost:3000",
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());
