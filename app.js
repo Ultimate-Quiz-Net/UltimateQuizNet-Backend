@@ -18,7 +18,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24,
-      // secure: true // https 일때 도 값이 잘 들어갈 수 있도록 배포시에 주석풀기.
+      secure: true, // https 일때 도 값이 잘 들어갈 수 있도록 배포시에 주석풀기.
     },
   })
 );

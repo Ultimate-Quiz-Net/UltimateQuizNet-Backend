@@ -18,6 +18,7 @@ model Members {
     hashedRefreshToken String?
     quizzes            Quizzes[]
     debates            Debates[] 
+    comments           Comments[]
     @@map("Members")
 }
 
@@ -29,7 +30,7 @@ model Quizzes {
     imageURL           String      
     createdAt          DateTime    @default(now())
     updatedAt          DateTime    @updatedAt
-    deletedAt          DateTime    
+    deletedAt          DateTime?  
     User               Members     @relation(fields: [UserId], references: [userId])
 
     debates     Debates[]
@@ -44,10 +45,10 @@ model Debates {
     content            String      
     createdAt          DateTime    @default(now())
     updatedAt          DateTime    @updatedAt
-    deletedAt          DateTime    
+    deletedAt          DateTime?    
 
     User               Members     @relation(fields: [UserId], references: [userId])
-    Quiz               Quizzes     @relation(fields: [QuizId], references: [quizId])
+    Quiz               Quizzes?     @relation(fields: [QuizId], references: [quizId])
     Comments           Comments[]
 
     @@map("Debates")
@@ -56,11 +57,13 @@ model Debates {
 model Comments {
   commentId            Int         @id @default(autoincrement())
   DebateId             Int
-  title                String       
+  UserId               Int
   content              String   
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
-  deletedAt            DateTime    
+  deletedAt            DateTime?    
+
+  User                 Members     @relation(fields: [UserId], references: [userId])
   Debates              Debates     @relation(fields: [DebateId], references: [debateId], onDelete: Cascade )
 
   @@map("Comments")
