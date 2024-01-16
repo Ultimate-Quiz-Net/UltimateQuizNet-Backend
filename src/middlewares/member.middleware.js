@@ -20,7 +20,6 @@ export default async function (req, res, next) {
     }
 
     if (verifyAccessToken == "jwt expired") {
-
       const decodedInfo = decodedAccessToken(accessToken);
 
       const member = await prisma.Members.findFirst({
@@ -53,9 +52,11 @@ export default async function (req, res, next) {
       }
 
       const myNewAccessToken = createAccessToken(decodedInfo.username);
-      res.cookie("accessToken", `Bearer ${myNewAccessToken}`);
+      res.cookie("accessToken", `Bearer ${myNewAccessToken}`, {
+        secure: true,
+      });
 
-      req.member = member; 
+      req.member = member;
 
       next();
     }
@@ -87,7 +88,9 @@ export default async function (req, res, next) {
 
     if (verifyRefreshToken == "jwt expired") {
       const myNewRefreshToken = createRefreshToken(member.username);
-      res.cookie("refreshToken", `Bearer ${myNewRefreshToken}`);
+      res.cookie("refreshToken", `Bearer ${myNewRefreshToken}`, {
+        secure: true,
+      });
 
       const salt = bcrypt.genSaltSync(parseInt(process.env.BCRYPT_SALT));
       const hashedRefreshToken = bcrypt.hashSync(myNewRefreshToken, salt);
@@ -100,7 +103,7 @@ export default async function (req, res, next) {
       });
     }
 
-    req.member = member; 
+    req.member = member;
 
     next();
   } catch (error) {
@@ -127,7 +130,6 @@ function validateAccesstoken(accessToken) {
 
     if (tokenType !== "Bearer")
       throw new Error(" 로그인이 필요한 서비스 입니다. ");
-
 
     return jwt.verify(token, process.env.JWT_ACCESS_SECRET_KEY);
   } catch (error) {

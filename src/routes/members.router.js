@@ -87,8 +87,12 @@ membersRouter.post("/sign-in", async (req, res, next) => {
 
     // name accesstoken
     // name refreshtoken
-    res.cookie("accessToken", `Bearer ${accessToken}`);
-    res.cookie("refreshToken", `Bearer ${refreshToken}`);
+    res.cookie("accessToken", `Bearer ${accessToken}`, {
+      secure: true,
+    });
+    res.cookie("refreshToken", `Bearer ${refreshToken}`, {
+      secure: true,
+    });
 
     return res.status(200).json({ message: "로그인 성공." });
   } catch (err) {
@@ -179,6 +183,5 @@ export function createRefreshToken(username) {
 
   return refreshToken;
 }
-
 
 export default membersRouter;
