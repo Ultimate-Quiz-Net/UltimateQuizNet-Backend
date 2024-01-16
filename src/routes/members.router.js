@@ -26,7 +26,7 @@ membersRouter.post("/sign-up", async (req, res, next) => {
     if (!nickname || !password || !username) throw { name: "ValidationError" };
     const isExistMember = await prisma.Members.findFirst({
       where: { username },
-    });
+    })
     if (isExistMember) throw { name: "ExistMember" };
     const isExistNickName = await prisma.Members.findFirst({
       where: { nickname },
@@ -61,6 +61,7 @@ membersRouter.post("/sign-in", async (req, res, next) => {
     if (!username || !password) throw { name: "ValidationError" };
 
     const member = await prisma.Members.findFirst({ where: { username } });
+    if (!member) throw { name: "NoneData" }
 
     if (username !== member.username) throw { name: "nameError" };
     // 해쉬화 된 비밀번호 일치 하는지 확인.
