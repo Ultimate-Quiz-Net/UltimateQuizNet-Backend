@@ -5,9 +5,23 @@ import DebatesRouter from "./src/routes/debates.router.js";
 import errorHandlingMiddleware from "./src/middlewares/error.handling.middleware.js";
 import cookieParser from "cookie-parser";
 import expressSession from "express-session";
+import cors from "cors";
 
 const app = express();
 const port = 3000;
+
+// const whitelist = ['http://example1.com', 'http://example2.com']
+// var corsOptions = {
+//   origin: function (origin, callback) {
+//     if (whitelist.indexOf(origin) !== -1) {
+//       callback(null, true)
+//     } else {
+//       callback(new Error('Not allowed by CORS'))
+//     }
+//   }
+// }
+
+app.use(cors());
 
 app.use(express.json());
 app.use(cookieParser());

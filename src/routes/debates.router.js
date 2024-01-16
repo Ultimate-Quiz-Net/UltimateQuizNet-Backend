@@ -76,12 +76,14 @@ router.get("/debates", authMiddlewares, async (req, res, next) => {
       throw new Error("NoneData");
     }
 
-    // 성공 시, 토론 목록을 클라이언트에게 전달
-    return res.status(200).json({ data: data });
-  } catch (error) {
-    next(error);
+
+      // 성공 시, 토론 목록을 클라이언트에게 전달
+      return res.status(200).json({ data: data });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // 토론 상세 조회 & 포함된 댓글도 함께 조회
 router.get("/debates/:debateId", authMiddlewares, async (req, res, next) => {
@@ -136,6 +138,7 @@ router.patch("/debates/:debateId", authMiddlewares, async (req, res, next) => {
     // title(제목)과 content(내용)이 있음.
     const { title, content } = req.body;
     const { debateId } = req.params;
+
     // 제목과 내용이 없을 시 다음 오류를 반환.
     if (!title || !content) {
       throw new Error("unQualified");
@@ -166,6 +169,7 @@ router.delete("/debates/:debateId", authMiddlewares, async (req, res, next) => {
     const { debateId } = req.params;
     // 제목과 내용이 없을 시 다음 오류를 반환.
 
+
     // 해당 데이터를 DB에 soft delete로 입력
     await prisma.debates.update({
       where: { debateId: +debateId },
@@ -177,6 +181,7 @@ router.delete("/debates/:debateId", authMiddlewares, async (req, res, next) => {
     return res.status(202).json({ message: "게시글을 삭제하였습니다." });
   } catch (error) {
     next(error);
+
   }
 });
 
