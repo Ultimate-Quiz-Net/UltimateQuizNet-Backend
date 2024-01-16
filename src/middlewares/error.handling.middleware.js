@@ -15,6 +15,8 @@ export default function(err, req, res, next) {
             return res.status(409).json({ errorMessage: " 중복된 닉네임 입니다. " })
         } else if (err.name === "NoneData") {
             return res.status(400).json({ errorMessage: " 존재 하지 않는 데이터 입니다. " })
+        }else if (err.name === "unQualified") {
+            return res.status(400).json({ errorMessage: " 입력 조건을 확인해 주세요. " })
         }
             next(err)
     } catch (err) {
