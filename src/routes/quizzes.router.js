@@ -9,9 +9,14 @@ const router = express.Router();
 router.post('/quizzes', upload.single('image'), memberMiddleware, async (req, res, next) => {
     try {
         const { title, content } = req.body;
+        // memberMiddleware 를 통해 설정된 req.member 에서 사용자 정보를 가져오기
         const member = req.member;
+
+        // 업로드된 이미지 파일의 위치를 요청 본문의 image 필드에 할당
         req.body.image = req.file.location;
-        const quiz = await prisma.Quizzes.create({
+
+        // prisma를 사용하여 퀴즈를 db에 저장
+        const quiz = await prisma.quizzes.create({
             data: {
                 UserId: member.userId,
                 title,
@@ -19,32 +24,141 @@ router.post('/quizzes', upload.single('image'), memberMiddleware, async (req, re
                 imageURL: req.file.location,
             }
         });
-        return res.status(200).json({ message: " done.", data: quiz });
+        return res.status(200).json({ message: "퀴즈를 등록하였습니다.", data: quiz });
     } catch (error) {
-        return res.status(400).json({ message: "다시." });
+        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
     }
 });
 
-// 퀴즈 등록 api
-// router.post('/quizzes', memberMiddleware, upload.single("image"), async (req, res, next) => {
-//     try {
-//         const { title, content } = req.body;
-//         req.body.image = req.file.location
-//         const member =
-//         // 유효성 검사 실행
-//         await schema.validateAsync({ title, content });
-//         // body로부터 아래의 값을 올바르게 전달받지 못한다면 400에러를 호출합니다.
-//         if (!title || !content) {
-//             return next(new Error("400"));
-//         }
-//         // 퀴즈를 등록하는 기능
-//         await prisma.quizzes.create({
-//             data: { title, content, imageURL: req.file.location }
-//         })
-//         return res.status(201).json({ Message: "퀴즈를 등록하였습니다." });
-//     } catch (error) {
-//         console.error(error);
-//         return next(new Error("500")); };
-// });
+// 퀴즈 수정 api
+router.patch('/quizzes/:quizId', upload.single('image'), memberMiddleware, async (req, res, next) => {
+    try {
+        const { title, content } = req.body; // body로부터 수정된 title과 content을 받음
+        const { quizId } = req.params; // URL에서 quizId를 추출
+
+        // 수정하기 위한 필수 데이터 체크
+        if (!quizId) {
+            return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
+        }
+
+        // 게시된 퀴즈가 있는지 존재 여부를 확인
+        let quiz = await prisma.quizzes.findUnique({
+            where: { quizId: parseInt(quizId) },
+        });
+        if (!quiz) {
+            return res.status(404).json({ message: "퀴즈를 찾을 수 없습니다." });
+        }
+
+        // 퀴즈 수정을 위한 데이터 준비
+        const updateQuiz = {
+            title: title || quiz.title, // 새로운 제목을 입력하면 사용하고, 그렇지 않다면 이전 제목을 유지
+            content: content || quiz.content, // 새로운 내용을 입력하면 사용하고, 그렇지 않다면 이전 내용을 유지
+            imageURL: req.file ? req.file.location : quiz.imageURL, // 새로운 이미지로 변경하면 사용하고, 그렇지 않다면 이전 이미지를 유지
+        };
+
+        // 퀴즈를 업데이트
+        quiz = await prisma.quizzes.update({
+            where: { quizId: parseInt(quizId) },
+            data: updateQuiz,
+        });
+
+        // 클라이언트에게 응답
+        return res.status(200).json({ message: "퀴즈를 수정하였습니다.", data: quiz });
+
+    } catch (error) {
+        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
+    }
+});
+
+// 퀴즈 삭제 api
+router.delete('/quizzes/:quizId', memberMiddleware, async (req, res) => {
+    try {
+        const { quizId } = req.params; // params로부터 삭제할 quizId를 받습니다.
+
+        // URL에서 추출한 quizId를 이용하여 퀴즈를 찾습니다.
+        const quiz = await prisma.quizzes.findUnique({
+            where: { quizId: parseInt(quizId) },
+        });
+
+        // 해당 quizId에 해당하는 퀴즈가 없는 경우 404 에러를 반환합니다.
+        if (!quiz) {
+            return res.status(404).json({ message: "퀴즈를 찾을 수 없습니다." });
+        }
+
+        // 이미 삭제된 퀴즈인 경우에는 이미 삭제되었다고 응답합니다.
+        if (quiz.deletedAt !== null) {
+            return res.status(200).json({ message: "퀴즈가 이미 삭제되었습니다." });
+        }
+
+        // 소프트 삭제를 위해 deletedAt 필드를 현재 시간으로 업데이트합니다.
+        const softDeletedQuiz = await prisma.quizzes.update({
+            where: { quizId: parseInt(quizId) },
+            data: { deletedAt: new Date() },
+        });
+
+        // 클라이언트에게 응답합니다.
+        return res.status(200).json({ message: "퀴즈를 삭제하였습니다.", data: softDeletedQuiz });
+    } catch (error) {
+        // 오류가 발생한 경우에는 400 에러를 반환합니다.
+        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
+    }
+});
+
+// 퀴즈 목록 api
+router.get('/quizzes', memberMiddleware, async (req, res, next) => {
+    try {
+        // prisma를 사용하여 등록된 퀴즈 목록을 가져오기
+        // 퀴즈를 찾을건데 = prisma의 quizzes에서, 다수의 퀴즈를 찾을거야.
+        const quizzes = await prisma.quizzes.findMany({
+            where: { // 어디서 갖고올건데? ('어떤 조건을 가진' 퀴즈가 속한 위치를 정할거야.)
+                deletedAt: null, //소프트 삭제되지 않은 퀴즈만 조회
+            },
+            select: { // 내가 가져올 퀴즈의 필드
+                quizId: true,
+                title: true,
+                imageURL: true,
+                content: true,
+            },
+        });
+
+        // 클라이언트에게 찾은 퀴즈목록을 보여줍니다.
+        return res.status(200).json({ data: quizzes });
+    } catch (error) {
+        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
+    }
+});
+
+// 목록에서 선택한 퀴즈의 상세보기 api
+router.get('/quizzes/:quizId', memberMiddleware, async (req, res, next) => {
+    try {
+        const { quizId } = req.params; 
+        const quiz = await prisma.quizzes.findUnique({
+            where: {
+                quizId: parseInt(quizId), // 추출한 상세보기하려는 퀴즈의 주소값을 정수화합니다.
+            },
+            select: {
+                title: true,
+                imageURL: true,
+                content: true,
+            }
+        });
+
+        // 해당 id의 퀴즈가 없다면?
+        if (!quiz) {
+            return res.status(404).json({ message: "퀴즈를 찾을 수 없습니다." });
+        }
+
+        // 퀴즈를 상세보기합니다.
+        return res.status(200).json(quiz);
+    } catch (error) {
+        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
+    }
+});
 
 export default router;
+
+
+// 작성v, 수정v, 삭제v, 상세보기v, 목록v,
+
+// 작성 post, 수정 patch, 삭제 deletd, 상세보기 get, 목록 get 
+
