@@ -155,6 +155,10 @@ router.get('/quizzes/:quizId', memberMiddleware, async (req, res, next) => {
     }
 });
 
+// 상세보기 했을 때 해당 퀴즈의 삭제 api
+
+
+
 export default router;
 
 
