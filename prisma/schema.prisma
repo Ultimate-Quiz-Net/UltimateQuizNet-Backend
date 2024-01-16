@@ -33,14 +33,12 @@ model Quizzes {
     deletedAt          DateTime?  
     User               Members     @relation(fields: [UserId], references: [userId])
 
-    debates     Debates[]
     @@map("Quizzes")
 }
 
 model Debates {
     debateId           Int         @id @default(autoincrement())
-    UserId             Int         
-    QuizId             Int         
+    UserId             Int              
     title              String      
     content            String      
     createdAt          DateTime    @default(now())
@@ -48,7 +46,6 @@ model Debates {
     deletedAt          DateTime?    
 
     User               Members     @relation(fields: [UserId], references: [userId])
-    Quiz               Quizzes?     @relation(fields: [QuizId], references: [quizId])
     Comments           Comments[]
 
     @@map("Debates")

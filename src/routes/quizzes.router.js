@@ -2,19 +2,25 @@ import express from "express";
 import upload from '../../assets/AWS.S3.js'
 import memberMiddleware from "../middlewares/member.middleware.js";
 import { prisma } from "../utils/index.js";
+import Joi from "joi";
 
 const router = express.Router();
+
+// 유효성 검사 추가함.
+const checkQuizzes = Joi.object({
+    title: Joi.string().min(2).max(30),
+    content: Joi.string().min(5)
+})
 
 // 퀴즈 등록 api
 router.post('/quizzes', upload.single('image'), memberMiddleware, async (req, res, next) => {
     try {
-        const { title, content } = req.body;
+        const { title, content } = await checkQuizzes.validateAsync(req.body)
+        if(!title || !content) throw { name: "ValidationError" } // 추가함.
         // memberMiddleware 를 통해 설정된 req.member 에서 사용자 정보를 가져오기
         const member = req.member;
-
         // 업로드된 이미지 파일의 위치를 요청 본문의 image 필드에 할당
         req.body.image = req.file.location;
-
         // prisma를 사용하여 퀴즈를 db에 저장
         const quiz = await prisma.quizzes.create({
             data: {
@@ -25,29 +31,25 @@ router.post('/quizzes', upload.single('image'), memberMiddleware, async (req, re
             }
         });
         return res.status(200).json({ message: "퀴즈를 등록하였습니다.", data: quiz });
-    } catch (error) {
-        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
+    } catch (err) {
+        next(err) // 수정
     }
 });
 
 // 퀴즈 수정 api
 router.patch('/quizzes/:quizId', upload.single('image'), memberMiddleware, async (req, res, next) => {
     try {
-        const { title, content } = req.body; // body로부터 수정된 title과 content을 받음
+        const { title, content } = await checkQuizzes.validateAsync(req.body) // body로부터 수정된 title과 content을 받음
         const { quizId } = req.params; // URL에서 quizId를 추출
 
         // 수정하기 위한 필수 데이터 체크
-        if (!quizId) {
-            return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
-        }
+        if (!quizId) throw { name: "ValidationError" } // 수정
 
         // 게시된 퀴즈가 있는지 존재 여부를 확인
         let quiz = await prisma.quizzes.findUnique({
-            where: { quizId: parseInt(quizId) },
+            where: { quizId: +quizId },
         });
-        if (!quiz) {
-            return res.status(404).json({ message: "퀴즈를 찾을 수 없습니다." });
-        }
+        if (!quiz) throw { name: "NoneData" } // 수정
 
         // 퀴즈 수정을 위한 데이터 준비
         const updateQuiz = {
@@ -58,15 +60,15 @@ router.patch('/quizzes/:quizId', upload.single('image'), memberMiddleware, async
 
         // 퀴즈를 업데이트
         quiz = await prisma.quizzes.update({
-            where: { quizId: parseInt(quizId) },
+            where: { quizId: +quizId },
             data: updateQuiz,
         });
 
         // 클라이언트에게 응답
         return res.status(200).json({ message: "퀴즈를 수정하였습니다.", data: quiz });
 
-    } catch (error) {
-        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
+    } catch (err) {
+        next(err) // 수정
     }
 });
 
@@ -77,13 +79,11 @@ router.delete('/quizzes/:quizId', memberMiddleware, async (req, res) => {
 
         // URL에서 추출한 quizId를 이용하여 퀴즈를 찾습니다.
         const quiz = await prisma.quizzes.findUnique({
-            where: { quizId: parseInt(quizId) },
+            where: { quizId: +quizId },
         });
 
         // 해당 quizId에 해당하는 퀴즈가 없는 경우 404 에러를 반환합니다.
-        if (!quiz) {
-            return res.status(404).json({ message: "퀴즈를 찾을 수 없습니다." });
-        }
+        if (!quiz) throw { name: "NoneData" } // 추가.
 
         // 이미 삭제된 퀴즈인 경우에는 이미 삭제되었다고 응답합니다.
         if (quiz.deletedAt !== null) {
@@ -92,15 +92,14 @@ router.delete('/quizzes/:quizId', memberMiddleware, async (req, res) => {
 
         // 소프트 삭제를 위해 deletedAt 필드를 현재 시간으로 업데이트합니다.
         const softDeletedQuiz = await prisma.quizzes.update({
-            where: { quizId: parseInt(quizId) },
+            where: { quizId: +quizId },
             data: { deletedAt: new Date() },
         });
 
         // 클라이언트에게 응답합니다.
         return res.status(200).json({ message: "퀴즈를 삭제하였습니다.", data: softDeletedQuiz });
-    } catch (error) {
-        // 오류가 발생한 경우에는 400 에러를 반환합니다.
-        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
+    } catch (err) {
+        next(err) // 수정
     }
 });
 
@@ -120,11 +119,10 @@ router.get('/quizzes', memberMiddleware, async (req, res, next) => {
                 content: true,
             },
         });
-
         // 클라이언트에게 찾은 퀴즈목록을 보여줍니다.
         return res.status(200).json({ data: quizzes });
-    } catch (error) {
-        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
+    } catch (err) {
+        next(err)
     }
 });
 
@@ -132,9 +130,9 @@ router.get('/quizzes', memberMiddleware, async (req, res, next) => {
 router.get('/quizzes/:quizId', memberMiddleware, async (req, res, next) => {
     try {
         const { quizId } = req.params; 
-        const quiz = await prisma.quizzes.findUnique({
+        const quiz = await prisma.Quizzes.findUnique({
             where: {
-                quizId: parseInt(quizId), // 추출한 상세보기하려는 퀴즈의 주소값을 정수화합니다.
+                quizId: +quizId, deletedAt: null // 추출한 상세보기하려는 퀴즈의 주소값을 정수화합니다.
             },
             select: {
                 title: true,
@@ -142,16 +140,12 @@ router.get('/quizzes/:quizId', memberMiddleware, async (req, res, next) => {
                 content: true,
             }
         });
-
         // 해당 id의 퀴즈가 없다면?
-        if (!quiz) {
-            return res.status(404).json({ message: "퀴즈를 찾을 수 없습니다." });
-        }
-
+        if (!quiz) throw { name: "NoneData" } // 수정.
         // 퀴즈를 상세보기합니다.
         return res.status(200).json(quiz);
-    } catch (error) {
-        return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
+    } catch (err) {
+        next(err)
     }
 });
 

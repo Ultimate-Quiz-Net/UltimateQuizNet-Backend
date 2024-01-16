@@ -16,22 +16,22 @@ const memberSchema = Joi.object({
 
 // 회원 가입 API
 membersRouter.post("/sign-up", async (req, res, next) => {
-    try {
-        // 여기서 유효성 검사.
-        const { username, nickname, password } = await memberSchema.validateAsync(
-            req.body
-        );
-        // 에러 처리 부분.
-        if (password.includes(username)) throw { name: "Duplication" };
-        if (!nickname || !password || !username) throw { name: "ValidationError" };
-        const isExistMember = await prisma.Members.findFirst({
-            where: { username },
-        });
-        if (isExistMember) throw { name: "ExistMember" };
-        const isExistNickName = await prisma.Members.findFirst({
-            where: { nickname },
-        });
-        if (isExistNickName) throw { name: "ExistNickName" };
+  try {
+    // 여기서 유효성 검사.
+    const { username, nickname, password } = await memberSchema.validateAsync(
+      req.body
+    );
+    // 에러 처리 부분.
+    if (password.includes(username)) throw { name: "Duplication" };
+    if (!nickname || !password || !username) throw { name: "ValidationError" };
+    const isExistMember = await prisma.Members.findFirst({
+      where: { username },
+    })
+    if (isExistMember) throw { name: "ExistMember" };
+    const isExistNickName = await prisma.Members.findFirst({
+      where: { nickname },
+    });
+    if (isExistNickName) throw { name: "ExistNickName" };
 
         const salt = bcrypt.genSaltSync(parseInt(process.env.BCRYPT_SALT));
         const hash_password = bcrypt.hashSync(password, salt);
@@ -60,7 +60,8 @@ membersRouter.post("/sign-in", async (req, res, next) => {
         // 에러 처리 부분.
         if (!username || !password) throw { name: "ValidationError" };
 
-        const member = await prisma.Members.findFirst({ where: { username } });
+    const member = await prisma.Members.findFirst({ where: { username } });
+    if (!member) throw { name: "NoneData" }
 
         if (username !== member.username) throw { name: "nameError" };
         // 해쉬화 된 비밀번호 일치 하는지 확인.
