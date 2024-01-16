@@ -126,7 +126,6 @@ membersRouter.post("/sign-out", memberMiddleware, async (req, res, next) => {
 membersRouter.patch("/pwupdate", memberMiddleware, async (req, res, next) => {
   try {
     if (!req.member) throw { name: "NoneData" };
-    console.log(req.member);
     const { password, newPassword } = req.body;
 
     console.log(password, newPassword);
@@ -135,16 +134,12 @@ membersRouter.patch("/pwupdate", memberMiddleware, async (req, res, next) => {
       where: { username: req.member.username },
     });
 
-    console.log(findUser);
-
     const checkPassword = await bcrypt.compare(password, findUser.password);
     if (!checkPassword) {
       return res
         .status(400)
         .json({ errorMessage: " 비밀번호가 일치 하지 않습니다. " });
     }
-
-    console.log(process.env.BCRYPT_SALT);
 
     const salt = bcrypt.genSaltSync(parseInt(process.env.BCRYPT_SALT));
 
