@@ -9,6 +9,10 @@ export default async function (req, res, next) {
   try {
     const { accessToken, refreshToken } = req.cookies;
 
+    if (!accessToken || !refreshToken) {
+      throw new Error(" 로그인이 필요한 서비스 입니다. ");
+    }
+
     const verifyAccessToken = validateAccesstoken(accessToken);
 
     if (verifyAccessToken == "invalid token") {

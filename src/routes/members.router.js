@@ -98,26 +98,26 @@ membersRouter.post("/sign-in", async (req, res, next) => {
         return res.status(200).json({ message: "로그인 성공." });
     } catch (err) {
         next(err);
-    }
+  }
 });
 
 // 로그아웃 API
 membersRouter.post("/sign-out", memberMiddleware, async (req, res, next) => {
-    try {
-        if (!req.member) throw { name: "NoneData" };
-        res.clearCookie("accessToken");
-        res.clearCookie("refreshToken");
+  try {
+    if (!req.member) throw { name: "NoneData" };
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
 
-        await prisma.Members.update({
-            where: { userId: req.member.userId },
-            data: {
-                hashedRefreshToken: null,
-            },
-        });
-        return res.status(200).json({ message: "로그아웃." });
-    } catch (err) {
-        next(err);
-    }
+    await prisma.Members.update({
+      where: { userId: req.member.userId },
+      data: {
+        hashedRefreshToken: null,
+      },
+    });
+    return res.status(200).json({ message: "로그아웃." });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // 비밀번호 변경 API
@@ -160,24 +160,26 @@ membersRouter.patch("/pwupdate", memberMiddleware, async (req, res, next) => {
 });
 
 export function createAccessToken(username) {
-    const accessToken = jwt.sign(
-        { username }, // JWT 데이터
-        process.env.JWT_ACCESS_SECRET_KEY, // Access Token의 비밀 키
-        { expiresIn: "1h" } // Access Token이 10초 뒤에 만료되도록 설정.
-    );
+  const accessToken = jwt.sign(
+    { username }, // JWT 데이터
+    process.env.JWT_ACCESS_SECRET_KEY, // Access Token의 비밀 키
+    { expiresIn: "1h" } // Access Token이 10초 뒤에 만료되도록 설정.
+  );
 
-    return accessToken;
+  return accessToken;
+
 }
 
 // Refresh Token을 생성하는 함수
 export function createRefreshToken(username) {
-    const refreshToken = jwt.sign(
-        { username }, // JWT 데이터
-        process.env.JWT_REFRESH_SECRET_KEY, // Refresh Token의 비밀 키
-        { expiresIn: "7d" } // Refresh Token이 7일 뒤에 만료되도록 설정.
-    );
 
-    return refreshToken;
+  const refreshToken = jwt.sign(
+    { username }, // JWT 데이터
+    process.env.JWT_REFRESH_SECRET_KEY, // Refresh Token의 비밀 키
+    { expiresIn: "7d" } // Refresh Token이 7일 뒤에 만료되도록 설정.
+  );
+
+  return refreshToken;
 }
 
 export default membersRouter;
