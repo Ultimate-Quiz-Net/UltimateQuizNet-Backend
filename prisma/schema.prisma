@@ -19,6 +19,7 @@ model Members {
     quizzes            Quizzes[]
     debates            Debates[] 
     comments           Comments[]
+    quizComments       QuizComments[] 
     @@map("Members")
 }
 
@@ -32,6 +33,7 @@ model Quizzes {
     updatedAt          DateTime    @updatedAt
     deletedAt          DateTime?  
     User               Members     @relation(fields: [UserId], references: [userId])
+    quizComments       QuizComments[]
 
     @@map("Quizzes")
 }
@@ -66,3 +68,17 @@ model Comments {
   @@map("Comments")
 }
 
+model QuizComments {
+  quizCommentId       Int          @id @default(autoincrement())
+  QuizId              Int
+  UserId              Int
+  content             String
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  deletedAt           DateTime?
+
+  User                Members      @relation(fields: [UserId], references: [userId])
+  Quiz                Quizzes      @relation(fields: [QuizId], references: [quizId], onDelete: Cascade)
+
+  @@map("QuizComments")
+}
