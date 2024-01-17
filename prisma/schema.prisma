@@ -33,6 +33,7 @@ model Quizzes {
     updatedAt          DateTime    @updatedAt
     deletedAt          DateTime?  
     User               Members     @relation(fields: [UserId], references: [userId])
+    quizComments       QuizComments[]
 
     @@map("Quizzes")
 }
