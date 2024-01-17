@@ -16,7 +16,7 @@ const checkQuizzes = Joi.object({
 router.post('/quizzes', upload.single('image'), memberMiddleware, async (req, res, next) => {
     try {
         const { title, content } = await checkQuizzes.validateAsync(req.body)
-        if(!title || !content) throw { name: "ValidationError" } // 추가함.
+        if (!title || !content) throw { name: "ValidationError" } // 추가함.
         // memberMiddleware 를 통해 설정된 req.member 에서 사용자 정보를 가져오기
         const member = req.member;
         // 업로드된 이미지 파일의 위치를 요청 본문의 image 필드에 할당
@@ -129,7 +129,7 @@ router.get('/quizzes', memberMiddleware, async (req, res, next) => {
 // 목록에서 선택한 퀴즈의 상세보기 api
 router.get('/quizzes/:quizId', memberMiddleware, async (req, res, next) => {
     try {
-        const { quizId } = req.params; 
+        const { quizId } = req.params;
         const quiz = await prisma.Quizzes.findUnique({
             where: {
                 quizId: +quizId, deletedAt: null // 추출한 상세보기하려는 퀴즈의 주소값을 정수화합니다.
