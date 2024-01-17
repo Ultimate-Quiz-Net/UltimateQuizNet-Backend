@@ -69,7 +69,7 @@ model Comments {
 }
 
 model QuizComments {
-  quizCommentId       Int          @id @default(autoincrement)
+  quizCommentId       Int          @id @default(autoincrement())
   QuizId              Int
   UserId              Int
   content             String

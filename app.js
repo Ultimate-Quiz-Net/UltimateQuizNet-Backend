@@ -2,6 +2,7 @@ import express from "express";
 import QuizzersRouter from "./src/routes/quizzes.router.js";
 import membersRouter from "./src/routes/members.router.js";
 import DebatesRouter from "./src/routes/debates.router.js";
+import QuizzCommentsRouter from "./src/routes/quizcomments.router.js";
 import errorHandlingMiddleware from "./src/middlewares/error.handling.middleware.js";
 import cookieParser from "cookie-parser";
 import expressSession from "express-session";
@@ -44,7 +45,7 @@ router.get("/", (req, res) => {
   return res.json({ message: "hello world" });
 });
 
-app.use("/api", [QuizzersRouter, membersRouter, DebatesRouter]);
+app.use("/api", [QuizzersRouter, membersRouter, DebatesRouter, QuizzCommentsRouter]);
 app.use(errorHandlingMiddleware);
 
 app.listen(port, () => {
