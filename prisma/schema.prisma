@@ -19,7 +19,7 @@ model Members {
     quizzes            Quizzes[]
     debates            Debates[] 
     comments           Comments[]
-    quizComments       QuizComments[] // 새로추가. 기능사용하지않을시 주석처리
+    quizComments       QuizComments[] 
     @@map("Members")
 }
 
@@ -67,7 +67,6 @@ model Comments {
   @@map("Comments")
 }
 
-// 퀴즈 게시판의 댓글 등록을 할때 필요한 테이블. 사용하지 않으면 주석처리
 model QuizComments {
   quizCommentId       Int          @id @default(autoincrement)
   QuizId              Int
@@ -79,7 +78,6 @@ model QuizComments {
 
   User                Members      @relation(fields: [UserId], references: [userId])
   Quiz                Quizzes      @relation(fields: [QuizId], references: [quizId], onDelete: Cascade)
-
 
   @@map("QuizComments")
 }
