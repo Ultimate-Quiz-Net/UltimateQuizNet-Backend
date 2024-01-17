@@ -9,95 +9,97 @@ const membersRouter = express.Router();
 
 // 아이디 유효성 검사 부분.
 const memberSchema = Joi.object({
-    username: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{2,15}$")).required(),
-    nickname: Joi.string().min(2).max(15).required(),
-    password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{5,20}$")).required(),
+  username: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{2,15}$")).required(),
+  nickname: Joi.string().min(2).max(15).required(),
+  password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{5,20}$")).required(),
 });
 
 // 회원 가입 API
 membersRouter.post("/sign-up", async (req, res, next) => {
-    try {
-        // 여기서 유효성 검사.
-        const { username, nickname, password } = await memberSchema.validateAsync(
-            req.body
-        );
-        // 에러 처리 부분.
-        if (password.includes(username)) throw { name: "Duplication" };
-        if (!nickname || !password || !username) throw { name: "ValidationError" };
-        const isExistMember = await prisma.Members.findFirst({
-            where: { username },
-        })
-        if (isExistMember) throw { name: "ExistMember" };
-        const isExistNickName = await prisma.Members.findFirst({
-            where: { nickname },
-        });
-        if (isExistNickName) throw { name: "ExistNickName" };
+  try {
+    // 여기서 유효성 검사.
+    const { username, nickname, password } = await memberSchema.validateAsync(
+      req.body
+    );
+    // 에러 처리 부분.
+    if (password.includes(username)) throw { name: "Duplication" };
+    if (!nickname || !password || !username) throw { name: "ValidationError" };
+    const isExistMember = await prisma.Members.findFirst({
+      where: { username },
+    });
+    if (isExistMember) throw { name: "ExistMember" };
+    const isExistNickName = await prisma.Members.findFirst({
+      where: { nickname },
+    });
+    if (isExistNickName) throw { name: "ExistNickName" };
 
-        const salt = bcrypt.genSaltSync(parseInt(process.env.BCRYPT_SALT));
-        const hash_password = bcrypt.hashSync(password, salt);
+    const salt = bcrypt.genSaltSync(parseInt(process.env.BCRYPT_SALT));
+    const hash_password = bcrypt.hashSync(password, salt);
 
-        // 여기서 최종적으로 디비에 저장.
-        const member = await prisma.Members.create({
-            data: {
-                username,
-                nickname,
-                password: hash_password,
-            },
-        });
-        return res
-            .status(200)
-            .json({ message: " 회원 가입이 완료 되었습니다. ", data: member });
-    } catch (err) {
-        next(err);
-    }
+    // 여기서 최종적으로 디비에 저장.
+    const member = await prisma.Members.create({
+      data: {
+        username,
+        nickname,
+        password: hash_password,
+      },
+    });
+    return res
+      .status(200)
+      .json({ message: " 회원 가입이 완료 되었습니다. ", data: member });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // 로그인 API
 membersRouter.post("/sign-in", async (req, res, next) => {
-    try {
-        const { username, password } = req.body;
+  try {
+    const { username, password } = req.body;
 
-        // 에러 처리 부분.
-        if (!username || !password) throw { name: "ValidationError" };
+    // 에러 처리 부분.
+    if (!username || !password) throw { name: "ValidationError" };
 
-        const member = await prisma.Members.findFirst({ where: { username } });
-        if (!member) throw { name: "NoneData" }
+    const member = await prisma.Members.findFirst({ where: { username } });
+    if (!member) throw { name: "NoneData" };
 
-        if (username !== member.username) throw { name: "nameError" };
-        // 해쉬화 된 비밀번호 일치 하는지 확인.
-        const checkPassword = await bcrypt.compare(password, member.password);
-        if (!checkPassword) {
-            return res
-                .status(400)
-                .json({ errorMessage: " 비밀번호가 일치 하지 않습니다. " });
-        }
+    if (username !== member.username) throw { name: "nameError" };
+    // 해쉬화 된 비밀번호 일치 하는지 확인.
+    const checkPassword = await bcrypt.compare(password, member.password);
+    if (!checkPassword) {
+      return res
+        .status(400)
+        .json({ errorMessage: " 비밀번호가 일치 하지 않습니다. " });
+    }
 
-        const accessToken = createAccessToken(member.username);
+    const accessToken = createAccessToken(member.username);
 
-        const refreshToken = createRefreshToken(member.username);
+    const refreshToken = createRefreshToken(member.username);
 
-        const salt = bcrypt.genSaltSync(parseInt(process.env.BCRYPT_SALT));
-        const hashedRefreshToken = bcrypt.hashSync(refreshToken, salt);
+    const salt = bcrypt.genSaltSync(parseInt(process.env.BCRYPT_SALT));
+    const hashedRefreshToken = bcrypt.hashSync(refreshToken, salt);
 
-        await prisma.Members.update({
-            where: { userId: member.userId },
-            data: {
-                hashedRefreshToken,
-            },
-        });
+    await prisma.Members.update({
+      where: { userId: member.userId },
+      data: {
+        hashedRefreshToken,
+      },
+    });
 
-        // name accesstoken
-        // name refreshtoken
-        res.cookie("accessToken", `Bearer ${accessToken}`, {
-            secure: true,
-        });
-        res.cookie("refreshToken", `Bearer ${refreshToken}`, {
-            secure: true,
-        });
+    // name accesstoken
+    // name refreshtoken
+    res.cookie("accessToken", `Bearer ${accessToken}`, {
+      secure: true,
+    });
+    res.cookie("refreshToken", `Bearer ${refreshToken}`, {
+      secure: true,
+    });
 
-        return res.status(200).json({ message: "로그인 성공." });
-    } catch (err) {
-        next(err);
+    return res
+      .status(200)
+      .json({ message: "로그인 성공.", data: { accessToken, refreshToken } });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -124,39 +126,39 @@ membersRouter.post("/sign-out", memberMiddleware, async (req, res, next) => {
 // 비밀번호 바디에 받고 -> 확인
 // 맞으면 변경.
 membersRouter.patch("/pwupdate", memberMiddleware, async (req, res, next) => {
-    try {
-        if (!req.member) throw { name: "NoneData" };
-        const { password, newPassword } = req.body;
+  try {
+    if (!req.member) throw { name: "NoneData" };
+    const { password, newPassword } = req.body;
 
-        console.log(password, newPassword);
+    console.log(password, newPassword);
 
-        const findUser = await prisma.Members.findFirst({
-            where: { username: req.member.username },
-        });
+    const findUser = await prisma.Members.findFirst({
+      where: { username: req.member.username },
+    });
 
-        const checkPassword = await bcrypt.compare(password, findUser.password);
-        if (!checkPassword) {
-            return res
-                .status(400)
-                .json({ errorMessage: " 비밀번호가 일치 하지 않습니다. " });
-        }
-
-        const salt = bcrypt.genSaltSync(parseInt(process.env.BCRYPT_SALT));
-
-        const hashPassword = bcrypt.hashSync(newPassword, salt);
-
-        console.log(hashPassword);
-
-        await prisma.Members.update({
-            where: { userId: findUser.userId },
-            data: {
-                password: hashPassword,
-            },
-        });
-        return res.status(200).json({ message: " 비밀번호가 변경 되었습니다. " });
-    } catch (err) {
-        next(err);
+    const checkPassword = await bcrypt.compare(password, findUser.password);
+    if (!checkPassword) {
+      return res
+        .status(400)
+        .json({ errorMessage: " 비밀번호가 일치 하지 않습니다. " });
     }
+
+    const salt = bcrypt.genSaltSync(parseInt(process.env.BCRYPT_SALT));
+
+    const hashPassword = bcrypt.hashSync(newPassword, salt);
+
+    console.log(hashPassword);
+
+    await prisma.Members.update({
+      where: { userId: findUser.userId },
+      data: {
+        password: hashPassword,
+      },
+    });
+    return res.status(200).json({ message: " 비밀번호가 변경 되었습니다. " });
+  } catch (err) {
+    next(err);
+  }
 });
 
 export function createAccessToken(username) {
@@ -167,12 +169,10 @@ export function createAccessToken(username) {
   );
 
   return accessToken;
-
 }
 
 // Refresh Token을 생성하는 함수
 export function createRefreshToken(username) {
-
   const refreshToken = jwt.sign(
     { username }, // JWT 데이터
     process.env.JWT_REFRESH_SECRET_KEY, // Refresh Token의 비밀 키
