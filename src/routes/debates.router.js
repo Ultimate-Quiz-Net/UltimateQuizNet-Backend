@@ -57,6 +57,7 @@ router.get("/debates", authMiddlewares, async (req, res, next) => {
       select: {
         debateId: true,
         title: true,
+        content: true,
         createdAt: true,
         User: {
           select: {
