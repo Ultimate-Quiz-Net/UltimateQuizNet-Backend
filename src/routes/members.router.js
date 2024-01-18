@@ -86,8 +86,6 @@ membersRouter.post("/sign-in", async (req, res, next) => {
       },
     });
 
-    // name accesstoken
-    // name refreshtoken
     res.cookie("accessToken", `Bearer ${accessToken}`, {
       secure: true,
     });
