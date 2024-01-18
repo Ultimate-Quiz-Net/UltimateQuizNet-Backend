@@ -173,29 +173,4 @@ function validateAccesstoken(accessToken) {
   }
 }
 
-async function validateRefreshToken(refreshToken, hashedRefreshToken) {
-  try {
-    const [tokenType, token] = refreshToken.split(" ");
 
-    if (tokenType !== "Bearer")
-      throw new Error(" 로그인이 필요한 서비스 입니다. ");
-
-    const checkRefreshToken = await bcrypt.compare(token, hashedRefreshToken);
-
-    if (!checkRefreshToken) {
-      return res.status(400).json({ errorMessage: "잘못된 접근입니다. " });
-    }
-    return jwt.verify(token, process.env.JWT_REFRESH_SECRET_KEY);
-  } catch (error) {
-    return error.message;
-  }
-}
-
-async function decodedAccessToken(accessToken) {
-  try {
-    const [tokenType, token] = refreshToken.split(" ");
-    return jwt.decode(token, process.env.JWT_ACCESS_SECRET_KEY);
-  } catch (error) {
-    return error.message;
-  }
-}

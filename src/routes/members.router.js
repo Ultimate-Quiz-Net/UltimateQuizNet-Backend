@@ -86,9 +86,6 @@ membersRouter.post("/sign-in", async (req, res, next) => {
       },
     });
 
-    res.cookie("accessToken", `Bearer ${accessToken}`, {
-      secure: true,
-    });
     res.cookie("refreshToken", `Bearer ${refreshToken}`, {
       secure: true,
     });
@@ -105,8 +102,6 @@ membersRouter.post("/sign-in", async (req, res, next) => {
 membersRouter.post("/sign-out", memberMiddleware, async (req, res, next) => {
   try {
     if (!req.member) throw { name: "NoneData" };
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
 
     await prisma.Members.update({
       where: { userId: req.member.userId },
@@ -159,6 +154,75 @@ membersRouter.patch("/pwupdate", memberMiddleware, async (req, res, next) => {
   }
 });
 
+membersRouter.post("/refresh", async (req, res, next) => {
+  try {
+    const { accessToken, refreshToken } = req.body;
+
+    if (!refreshToken || !accessToken) {
+      throw new Error(" 로그인이 필요한 서비스 입니다. ");
+    }
+
+    const decodedInfo = decodedAccessToken(accessToken);
+
+    const member = await prisma.Members.findFirst({
+      where: { username: decodedInfo.username },
+    });
+
+    if (!member) {
+      throw new Error(" 토큰 사용자가 존재 하지 않습니다. ");
+    }
+
+    const verifyRefreshToken = validateRefreshToken(
+      refreshToken,
+      member.hashedRefreshToken
+    );
+
+    if (verifyRefreshToken == "invalid token") {
+      await prisma.Members.update({
+        where: { userId: member.userId },
+        data: {
+          hashedRefreshToken: null,
+        },
+      });
+
+      return res
+        .status(401)
+        .json({ message: "토큰이 인증에 실패 하였습니다." });
+    }
+
+    if (verifyRefreshToken == "jwt expired") {
+      await prisma.Members.update({
+        where: { userId: member.userId },
+        data: {
+          hashedRefreshToken: null,
+        },
+      });
+
+      throw new Error(" 로그인이 필요한 서비스 입니다. ");
+    }
+
+    const myNewAccessToken = createAccessToken(member.username);
+    const myNewRefreshToken = createRefreshToken(member.username);
+
+    const salt = bcrypt.genSaltSync(parseInt(process.env.BCRYPT_SALT));
+    const hashedRefreshToken = bcrypt.hashSync(myNewRefreshToken, salt);
+
+    await prisma.Members.update({
+      where: { userId: member.userId },
+      data: {
+        hashedRefreshToken,
+      },
+    });
+
+    return res.status(200).json({
+      message: "토큰 재발급.",
+      data: { myNewAccessToken, myNewRefreshToken },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export function createAccessToken(username) {
   const accessToken = jwt.sign(
     { username }, // JWT 데이터
@@ -178,6 +242,33 @@ export function createRefreshToken(username) {
   );
 
   return refreshToken;
+}
+
+async function validateRefreshToken(refreshToken, hashedRefreshToken) {
+  try {
+    const [tokenType, token] = refreshToken.split(" ");
+
+    if (tokenType !== "Bearer")
+      throw new Error(" 로그인이 필요한 서비스 입니다. ");
+
+    const checkRefreshToken = await bcrypt.compare(token, hashedRefreshToken);
+
+    if (!checkRefreshToken) {
+      return res.status(400).json({ errorMessage: "잘못된 접근입니다. " });
+    }
+    return jwt.verify(token, process.env.JWT_REFRESH_SECRET_KEY);
+  } catch (error) {
+    return error.message;
+  }
+}
+
+async function decodedAccessToken(accessToken) {
+  try {
+    const [tokenType, token] = refreshToken.split(" ");
+    return jwt.decode(token, process.env.JWT_ACCESS_SECRET_KEY);
+  } catch (error) {
+    return error.message;
+  }
 }
 
 export default membersRouter;
