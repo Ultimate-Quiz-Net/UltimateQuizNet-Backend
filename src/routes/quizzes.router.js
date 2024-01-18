@@ -116,7 +116,7 @@ router.delete('/quizzes/:quizId', memberMiddleware, async (req, res) => {
 });
 
 // 퀴즈 목록 api
-router.get('/quizzes', memberMiddleware, async (req, res, next) => {
+router.get('/quizzes', async (req, res, next) => {
     try {
         // prisma를 사용하여 등록된 퀴즈 목록을 가져오기
         // 퀴즈를 찾을건데 = prisma의 quizzes에서, 다수의 퀴즈를 찾을거야.
