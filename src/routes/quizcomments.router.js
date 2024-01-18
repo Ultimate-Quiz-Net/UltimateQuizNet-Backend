@@ -59,6 +59,10 @@ router.patch('/quizzes/:quizId/quizComments/:commentId', memberMiddleware, async
         const existingComment = await prisma.quizComments.findUnique({
             where: { quizCommentId: +commentId }
         });
+        if(!existingComment) {
+            return res.status(404).json({ message: " 댓글이 존재 하지 않습니다. " })
+        }
+        
 
         // 댓글이 없거나, 로그인한 사용자가 댓글 작성자가 아니면 에러 반환
         if (!existingComment || existingComment.UserId !== userId) {
