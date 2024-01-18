@@ -57,7 +57,6 @@ router.get("/debates", authMiddlewares, async (req, res, next) => {
       select: {
         debateId: true,
         title: true,
-        content: true,
         createdAt: true,
         User: {
           select: {
@@ -94,6 +93,7 @@ router.get("/debates/:debateId", authMiddlewares, async (req, res, next) => {
       where: { debateId: +debateId, deletedAt: null },
       select: {
         title: true,
+        content: true,
         createdAt: true,
         User: {
           select: {
