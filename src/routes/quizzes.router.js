@@ -41,6 +41,7 @@ router.patch('/quizzes/:quizId', upload.single('image'), memberMiddleware, async
     try {
         const { title, content } = await checkQuizzes.validateAsync(req.body) // body로부터 수정된 title과 content을 받음
         const { quizId } = req.params; // URL에서 quizId를 추출
+        const userId = req.member.userId // 로그인 된 사용자 id
 
         // 수정하기 위한 필수 데이터 체크
         if (!quizId) throw { name: "ValidationError" } // 수정
@@ -51,6 +52,11 @@ router.patch('/quizzes/:quizId', upload.single('image'), memberMiddleware, async
         });
         if (!quiz) throw { name: "NoneData" } // 수정
 
+        // 퀴즈 작성자가 로그인한 사용자가 아니면 에러 반환
+        if (quiz.UserId !== userId) {
+            return res.status(403).json({ message: "퀴즈를 수정할 권한이 없습니다." });
+        }
+        
         // 퀴즈 수정을 위한 데이터 준비
         const updateQuiz = {
             title: title || quiz.title, // 새로운 제목을 입력하면 사용하고, 그렇지 않다면 이전 제목을 유지
@@ -76,6 +82,7 @@ router.patch('/quizzes/:quizId', upload.single('image'), memberMiddleware, async
 router.delete('/quizzes/:quizId', memberMiddleware, async (req, res) => {
     try {
         const { quizId } = req.params; // params로부터 삭제할 quizId를 받습니다.
+        const userId = req.member.userId // 로그인 된 사용자 id
 
         // URL에서 추출한 quizId를 이용하여 퀴즈를 찾습니다.
         const quiz = await prisma.quizzes.findUnique({
@@ -84,6 +91,11 @@ router.delete('/quizzes/:quizId', memberMiddleware, async (req, res) => {
 
         // 해당 quizId에 해당하는 퀴즈가 없는 경우 404 에러를 반환합니다.
         if (!quiz) throw { name: "NoneData" } // 추가.
+
+        // 퀴즈 작성자가 로그인한 사용자가 아니면 에러 반환
+        if (quiz.UserId !== userId) {
+            return res.status(403).json({ message: "퀴즈를 삭제할 권한이 없습니다." });
+        }
 
         // 이미 삭제된 퀴즈인 경우에는 이미 삭제되었다고 응답합니다.
         if (quiz.deletedAt !== null) {
@@ -104,7 +116,7 @@ router.delete('/quizzes/:quizId', memberMiddleware, async (req, res) => {
 });
 
 // 퀴즈 목록 api
-router.get('/quizzes', memberMiddleware, async (req, res, next) => {
+router.get('/quizzes', async (req, res, next) => {
     try {
         // prisma를 사용하여 등록된 퀴즈 목록을 가져오기
         // 퀴즈를 찾을건데 = prisma의 quizzes에서, 다수의 퀴즈를 찾을거야.
@@ -130,6 +142,7 @@ router.get('/quizzes', memberMiddleware, async (req, res, next) => {
 router.get('/quizzes/:quizId', memberMiddleware, async (req, res, next) => {
     try {
         const { quizId } = req.params;
+        const member = req.member;
         const quiz = await prisma.Quizzes.findUnique({
             where: {
                 quizId: +quizId, deletedAt: null // 추출한 상세보기하려는 퀴즈의 주소값을 정수화합니다.
