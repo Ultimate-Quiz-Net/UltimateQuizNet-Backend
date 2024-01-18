@@ -49,7 +49,7 @@ router.post("/debates", authMiddlewares, async (req, res, next) => {
 });
 
 // 토론 조회 API
-router.get("/debates", authMiddlewares, async (req, res, next) => {
+router.get("/debates", async (req, res, next) => {
   try {
     // DB에서 토론글을 끄집어냄
     // 끄집어내는 데이터: 고유 ID 값, 제목, 생성날짜
